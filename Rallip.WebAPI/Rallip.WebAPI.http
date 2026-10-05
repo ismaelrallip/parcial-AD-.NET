@@ -1,0 +1,6 @@
+@Rallip.WebAPI_HostAddress = http://localhost:5203
+
+GET {{Rallip.WebAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
