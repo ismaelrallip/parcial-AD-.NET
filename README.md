@@ -54,7 +54,46 @@ Crea una Solución en blanco y agrega los siguientes 7 proyectos respetando el p
     *   *Lo clave:* El botón "Finalizar" se deshabilita por defecto y solo se habilita usando el evento `SelectionChanged` de la grilla cuando el usuario realmente selecciona una fila.
 *   **`FormAlta.cs`:** Pantalla de creación sin selector de Estado.
     *   *Lo clave:* Antes de instanciar el DTO y llamar a la API, utiliza `decimal.TryParse` para validar que el texto ingresado en Monto sea un número válido y evalúa los rangos para evitar viajes innecesarios al servidor.
+### Configuración de la Interfaz Gráfica (Windows Forms)
 
+Para cumplir con los requerimientos visuales y de interacción de la consigna, la configuración de los formularios debe estructurarse de la siguiente manera:
+
+#### 1. FormListado (Pantalla Principal)
+Encargada de mostrar los datos, filtrar por estado y manejar las acciones de alta y finalización.
+
+*   **Controles y Herramientas:**
+    *   `dgvAlquileres` (DataGridView): Para mostrar el listado de alquileres.
+    *   `cmbEstados` (ComboBox): Para seleccionar el filtro de estado.
+    *   `btnFiltrar` (Button): Ejecuta la búsqueda.
+    *   `btnAgregar` (Button): Abre la pantalla de alta.
+    *   `btnFinalizar` (Button): Finaliza el alquiler seleccionado.
+*   **Propiedades Clave:**
+    *   **`cmbEstados`:** En la propiedad `Items` agregar los valores `"Activo"` y `"Finalizado"`. Configurar `DropDownStyle = DropDownList` para evitar que el usuario tipee texto libre.
+    *   **`dgvAlquileres`:** Configurar `SelectionMode = FullRowSelect` (selecciona toda la fila al hacer clic) y `MultiSelect = False` (solo permite seleccionar un alquiler a la vez).
+    *   **`btnFinalizar`:** Configurar `Enabled = False` desde el diseñador para que arranque deshabilitado.
+*   **Eventos Fundamentales:**
+    *   `btnFiltrar_Click`: Lee el valor de `cmbEstados.SelectedItem`, invoca a `GetAlquileresAsync(estado)` y asigna el resultado al `DataSource` de la grilla.
+    *   `btnAgregar_Click`: Instancia `FormAlta` y lo abre usando `ShowDialog()`. Si el resultado es `DialogResult.OK`, recarga la grilla.
+    *   `dgvAlquileres_SelectionChanged`: Evalúa si hay una fila seleccionada (`dgvAlquileres.SelectedRows.Count > 0`); si es así, habilita el `btnFinalizar`.
+    *   `btnFinalizar_Click`: Captura el `Id` de la fila seleccionada, invoca a `FinalizarAlquilerAsync(id)` y actualiza el listado.
+
+#### 2. FormAlta (Pantalla de Creación)
+Encargada de recolectar los datos para un nuevo registro. **No debe incluir ningún control para el campo "Estado"**.
+
+*   **Controles y Herramientas:**
+    *   `txtInquilino` (TextBox): Para el nombre del inquilino.
+    *   `txtMonto` (TextBox): Para ingresar el monto del alquiler.
+    *   `dtpInicio` y `dtpFin` (DateTimePicker): Para seleccionar el rango de fechas.
+    *   `btnGuardar` y `btnCancelar` (Buttons): Acciones del formulario.
+*   **Propiedades Clave:**
+    *   **`dtpInicio` y `dtpFin`:** Configurar la propiedad `Format = Short` para que solo muestre la fecha sin la hora.
+*   **Eventos Fundamentales:**
+    *   `btnGuardar_Click`: 
+        1. Ejecuta validaciones preventivas de UI (ej. `decimal.TryParse` sobre `txtMonto.Text`).
+        2. Construye el `AlquilerDTO` con los datos de los controles.
+        3. Invoca a `AddAlquilerAsync(dto)`.
+        4. Si la respuesta es exitosa, establece `this.DialogResult = DialogResult.OK` y ejecuta `this.Close()`. Si falla, muestra el error en un `MessageBox`.
+    *   `btnCancelar_Click`: Ejecuta `this.Close()` sin realizar acciones.
 ## 4. Configuraciones Finales de Ejecución
 
 1.  **Migraciones:** En la Consola del Administrador de Paquetes, selecciona el proyecto **`Rallip.Data`** como predeterminado. Ejecuta `Add-Migration Inicial` y luego `Update-Database` para generar la base de datos `dbAlquiler` en tu SQL Server.
