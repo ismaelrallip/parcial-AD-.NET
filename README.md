@@ -39,4 +39,23 @@ Crea una Solución en blanco y agrega los siguientes 7 proyectos respetando el p
 
 ### Capa de Servicios (`Rallip.WebAPI`)
 *   **`AlquilerEndpoints.cs`:** Expone las rutas de la Minimal API.
-    *   *Lo clave:* El endpoint `MapPost` está envuelto en un `try-catch`. Si atrapa un `ArgumentException`, devuelve un error 4
+    *   *Lo clave:* El endpoint `MapPost` está envuelto en un `try-catch`. Si atrapa un `ArgumentException`, devuelve un error 400 (BadRequest). Si atrapa una excepción de base de datos, devuelve un error 500 (Problem), evitando que la API corte la conexión abruptamente.
+*   **`Program.cs`:** Configura la inyección de dependencias (`AddScoped` asociando las interfaces con sus implementaciones concretas), activa Swagger y mapea los endpoints.
+*   **`launchSettings.json` (en Properties):** Define los puertos de ejecución.
+    *   *Lo clave:* Se fija un puerto constante (ej. `http://localhost:5184`) para asegurar que el cliente sepa siempre dónde apuntar.
+
+### Capa de Clientes (`Rallip.API.Clients`)
+*   **`BaseApiClient.cs`:** Inicializa el `HttpClient`.
+    *   *Lo clave:* Define la `BaseAddress` apuntando exactamente al puerto configurado en el `launchSettings.json` de la API.
+*   **`AlquilerApiClient.cs`:** Utiliza `PostAsJsonAsync`, `GetFromJsonAsync` y `PutAsync` para comunicarse con la API de forma asíncrona.
+
+### Capa de Presentación (`Rallip.WindowsForms`)
+*   **`FormListado.cs`:** Maneja la grilla y los filtros.
+    *   *Lo clave:* El botón "Finalizar" se deshabilita por defecto y solo se habilita usando el evento `SelectionChanged` de la grilla cuando el usuario realmente selecciona una fila.
+*   **`FormAlta.cs`:** Pantalla de creación sin selector de Estado.
+    *   *Lo clave:* Antes de instanciar el DTO y llamar a la API, utiliza `decimal.TryParse` para validar que el texto ingresado en Monto sea un número válido y evalúa los rangos para evitar viajes innecesarios al servidor.
+
+## 4. Configuraciones Finales de Ejecución
+
+1.  **Migraciones:** En la Consola del Administrador de Paquetes, selecciona el proyecto **`Rallip.Data`** como predeterminado. Ejecuta `Add-Migration Inicial` y luego `Update-Database` para generar la base de datos `dbAlquiler` en tu SQL Server.
+2.  **Arranque Múltiple:** Haz clic derecho en la Solución -> **Propiedades** -> **Proyectos de inicio múltiples**. Configura la acción **"Iniciar"** tanto para **`Rallip.WebAPI`** como para **`Rallip.WindowsForms`** (asegurando que WebAPI esté primera en la lista).
